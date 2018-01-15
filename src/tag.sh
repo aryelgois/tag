@@ -27,6 +27,10 @@ function dir_exists {
     fi
 }
 
+function ere_quote {
+    sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "$*"
+}
+
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
@@ -34,10 +38,6 @@ function read_tags {
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
-}
-
-function ere_quote {
-    sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
 function unique {
