@@ -30,14 +30,14 @@ function dir_exists {
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
-        TMP=$(grep "^$2" "$1" | tail -n 1)
+        TMP=$(grep "^$(ere_quote "$2")" "$1" | tail -n 1)
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
 }
 
 function ere_quote {
-    sed 's/[]\.|$(){}?+*^]/\\&/g' <<< "$*"
+    sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
 function unique {
@@ -79,7 +79,7 @@ function add {
     IFS=','  ; NEW="${NEW[*]}"
     unset IFS
 
-    sed -i "/^$BASENAME/ d" "$TAG_FILE"
+    sed -i "/^$(ere_quote "$BASENAME")/ d" "$TAG_FILE"
     echo "$BASENAME/$NEW" >> $TAG_FILE
 }
 
