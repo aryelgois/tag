@@ -20,6 +20,13 @@ function file_exists {
     fi
 }
 
+function dir_exists {
+    if [[ ! -d $1 ]]; then
+        errcho "E: '$1' is not a directory, does not exist or is inaccessible"
+        return 4
+    fi
+}
+
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
@@ -27,6 +34,10 @@ function read_tags {
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
+}
+
+function ere_quote {
+    sed 's/[]\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
 function unique {
@@ -77,7 +88,24 @@ function filter {
 }
 
 function find {
-    :
+    dir_exists "$1" || return
+
+    local IFS=','
+    local TAGS=($(ere_quote "$2"))
+    local LIST=
+    unset IFS
+
+    for i in "${TAGS[@]}"; do
+        LIST="$LIST && /.*\/.*$i(,|$)/"
+    done
+    LIST="${LIST:4}"
+
+    command find "$1" -type f -name .tags | while read dotTAGS; do
+        DIRNAME="$(dirname "$dotTAGS")"
+        awk "$LIST" "$dotTAGS" | cut -d / -f 1 | while read FILE; do
+            echo "$DIRNAME/$FILE"
+        done
+    done
 }
 
 function remove {
