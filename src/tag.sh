@@ -73,6 +73,8 @@ USAGE:
 
     tag add|filter|remove TAGS [PATH]...
 
+    tag clear [DIRECTORY|.tags]...
+
     tag find TAGS [DIRECTORY]...
 
     tag list [PATH]...
@@ -174,6 +176,30 @@ function remove {
     fi
 }
 
+function clear {
+    file_exists "$1" || return
+
+    local BASENAME="$(basename "$1")"
+
+    if [[ -d $1 ]]; then
+        command find "$1" -type f -name .tags | while read TAG_FILE; do
+            clear "$TAG_FILE"
+        done
+        return
+    elif [[ $BASENAME != '.tags' ]]; then
+        errcho "E: File '$1' is not a .tags file"
+        return 6
+    fi
+
+    local DIRNAME="$(dirname "$1")"
+
+    cat "$1" | cut -d / -f 1 | while read FILE; do
+        [[ -e "$DIRNAME/$FILE" ]] || sed -i "/^$(ere_quote "$FILE")\// d" "$1"
+    done
+
+    [[ ! -s $1 ]] && rm "$1"
+}
+
 function list {
     file_exists "$1" || return
 
@@ -265,7 +291,7 @@ while [[ $# -gt 0 ]]; do
         fi
         exit
         ;;
-    list)
+    clear|list)
         shift
         if [[ $# -gt 0 ]]; then
             FILES=("$@")
@@ -273,11 +299,17 @@ while [[ $# -gt 0 ]]; do
             FILES=("${STDIN[@]}")
         fi
 
-        [[ ${#FILES[@]} -eq 0 ]] && help 1
+        if [[ ${#FILES[@]} -eq 0 ]]; then
+            if [[ $KEY == 'clear' ]]; then
+                FILES=('.')
+            else
+                help 1
+            fi
+        fi
 
         for FILE in "${FILES[@]}"
         do
-            list "$FILE"
+            $KEY "$FILE"
         done
         exit
         ;;
