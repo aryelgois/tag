@@ -40,6 +40,15 @@ function read_tags {
     echo $TMP
 }
 
+function array_remove {
+    local DELETE=$1
+    shift
+    while [[ $# -gt 0 ]]; do
+        [[ $1 != $DELETE ]] && echo $1
+        shift
+    done
+}
+
 function unique {
     for i in "$@"; do echo $i; done | sort -u
 }
@@ -109,7 +118,26 @@ function find {
 }
 
 function remove {
-    :
+    local TAG_FILE="$(dirname "$1")/.tags"
+    file_exists "$TAG_FILE" || return
+
+    local BASENAME=$(basename "$1")
+    local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
+    local IFS=
+    local NEW=
+
+    IFS=','  ; OLD=($OLD)
+    IFS=$'\n'; NEW=($(array_remove "$2" "${OLD[@]}"))
+    IFS=','  ; NEW="${NEW[*]}"
+    unset IFS
+
+    sed -i "/^$(ere_quote "$BASENAME")/ d" "$TAG_FILE"
+
+    if [[ -n $NEW ]]; then
+        echo "$BASENAME/$NEW" >> $TAG_FILE
+    elif [[ ! -s $TAG_FILE ]]; then
+        rm "$TAG_FILE"
+    fi
 }
 
 function list {
