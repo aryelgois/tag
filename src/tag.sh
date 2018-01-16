@@ -109,9 +109,9 @@ function find {
     done
     LIST="${LIST:4}"
 
-    command find "$1" -type f -name .tags | while read dotTAGS; do
-        DIRNAME="$(dirname "$dotTAGS")"
-        awk "$LIST" "$dotTAGS" | cut -d / -f 1 | while read FILE; do
+    command find "$1" -type f -name .tags | while read TAG_FILE; do
+        DIRNAME="$(dirname "$TAG_FILE")"
+        awk "$LIST" "$TAG_FILE" | cut -d / -f 1 | while read FILE; do
             echo "$DIRNAME/$FILE"
         done
     done
