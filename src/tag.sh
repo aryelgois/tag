@@ -28,7 +28,7 @@ function dir_exists {
 }
 
 function ere_quote {
-    sed 's/[][\.|$(){}?+*^]/\\&/g' <<< "$*"
+    sed 's/[][\/\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
 function read_tags {
@@ -88,7 +88,7 @@ function add {
     IFS=','  ; NEW="${NEW[*]}"
     unset IFS
 
-    sed -i "/^$(ere_quote "$BASENAME")/ d" "$TAG_FILE"
+    sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
     echo "$BASENAME/$NEW" >> $TAG_FILE
 }
 
@@ -138,7 +138,7 @@ function remove {
     NEW="${NEW[*]}"
     unset IFS
 
-    sed -i "/^$(ere_quote "$BASENAME")/ d" "$TAG_FILE"
+    sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
 
     if [[ -n $NEW ]]; then
         echo "$BASENAME/$NEW" >> $TAG_FILE
