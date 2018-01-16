@@ -100,7 +100,7 @@ function add {
     unset IFS
 
     [[ -e $TAG_FILE ]] && sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
-    echo "$BASENAME/$NEW" >> $TAG_FILE
+    echo "$BASENAME/$NEW" >> "$TAG_FILE"
 }
 
 function filter {
