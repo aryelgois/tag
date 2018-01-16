@@ -226,10 +226,17 @@ while [[ $# -gt 0 ]]; do
     list)
         shift
         if [[ $# -gt 0 ]]; then
-            list "$@"
+            FILES=("$@")
         else
-            help 1
+            FILES=("${STDIN[@]}")
         fi
+
+        [[ ${#FILES[@]} -eq 0 ]] && help 1
+
+        for FILE in "${FILES[@]}"
+        do
+            list "$FILE"
+        done
         exit
         ;;
     *)
