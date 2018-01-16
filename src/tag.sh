@@ -34,7 +34,7 @@ function array_unique {
     local -A TMP2
     local SEP=${2:-$'\x1f'}
     SEP="${SEP::1}"
-    for i in "${TMP1[@]}"; do TMP2["$i"]=1; done
+    for i in "${TMP1[@]}"; do [[ -n $i ]] && TMP2["$i"]=1; done
     TMP1="$(printf "%s$SEP" "${!TMP2[@]}")"
     array_parse TMP1 $SEP
 }
