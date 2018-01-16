@@ -282,15 +282,6 @@ while [[ $# -gt 0 ]]; do
         done
         exit
         ;;
-    copy|move)
-        shift
-        if [[ $# -eq 2 ]]; then
-            $KEY "$1" "$2"
-        else
-            help 1
-        fi
-        exit
-        ;;
     clear|list)
         shift
         if [[ $# -gt 0 ]]; then
@@ -311,6 +302,15 @@ while [[ $# -gt 0 ]]; do
         do
             $KEY "$FILE"
         done
+        exit
+        ;;
+    copy|move)
+        shift
+        if [[ $# -eq 2 ]]; then
+            $KEY "$1" "$2"
+        else
+            help 1
+        fi
         exit
         ;;
     *)
