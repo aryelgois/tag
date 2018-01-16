@@ -93,7 +93,25 @@ function add {
 }
 
 function filter {
-    :
+    file_exists "$1" || return
+
+    local BASENAME=$(basename "$1")
+    local TAG_FILE="$(dirname "$1")/.tags"
+    local IFS=','
+    local TAGS=($(ere_quote "$2"))
+    unset IFS
+    local LIST="/^$(ere_quote "$BASENAME")\//"
+    local FOUND=
+
+    for i in "${TAGS[@]}"; do
+        LIST="$LIST && /.*\/.*$i(,|$)/"
+    done
+
+    FOUND=$(awk "$LIST" "$TAG_FILE")
+
+    if [[ -n $FOUND ]]; then
+        echo "$1"
+    fi
 }
 
 function find {
