@@ -9,6 +9,18 @@
 # Utils
 #
 
+function array_parse {
+    local -n ARR=$1
+    local IFS=${2:-$'\x1f'}
+    ARR=($ARR)
+}
+
+function array_stringify {
+    local -n ARR=$1
+    local IFS=${2:-$'\x1f'}
+    ARR=("${ARR[*]}")
+}
+
 function get_files {
     FILES=()
     if [[ $# -gt 0 ]]; then
