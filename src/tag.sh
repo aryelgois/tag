@@ -9,6 +9,16 @@
 # Utils
 #
 
+function get_files {
+    FILES=()
+    if [[ $# -gt 0 ]]; then
+        FILES=("$@")
+    elif [[ ! -t 0 ]]; then
+        local IFS=$'\n';
+        FILES=($(</dev/stdin))
+    fi
+}
+
 function errcho {
     >&2 echo "$@"
 }
@@ -249,10 +259,6 @@ function move {
 # Main
 #
 
-if [[ ! -t 0 ]]; then
-    IFS=$'\n'; STDIN=($(</dev/stdin)); unset IFS
-fi
-
 while [[ $# -gt 0 ]]; do
     KEY="$1"
     NEXT="$2"
@@ -262,19 +268,11 @@ while [[ $# -gt 0 ]]; do
         help
         ;;
     add|filter|find|remove)
-        shift
-        if [[ -z $NEXT || $# -eq 0 && -z $STDIN ]]; then
-            if [[ -n $NEXT && $KEY == 'find' ]]; then
-                STDIN=('.')
-            else
-                help 1
-            fi
-        fi
+        [[ -n $NEXT ]] && shift || help 1
 
-        if [[ $# -gt 0 ]]; then
-            FILES=("$@")
-        else
-            FILES=("${STDIN[@]}")
+        get_files "$@"
+        if [[ ${#FILES[@]} -eq 0 ]]; then
+            [[ $KEY == 'find' ]] && FILES=('.') || help 1
         fi
 
         for FILE in "${FILES[@]}"
@@ -284,18 +282,9 @@ while [[ $# -gt 0 ]]; do
         exit
         ;;
     clear|list)
-        if [[ $# -gt 0 ]]; then
-            FILES=("$@")
-        else
-            FILES=("${STDIN[@]}")
-        fi
-
+        get_files "$@"
         if [[ ${#FILES[@]} -eq 0 ]]; then
-            if [[ $KEY == 'clear' ]]; then
-                FILES=('.')
-            else
-                help 1
-            fi
+            [[ $KEY == 'clear' ]] && FILES=('.') || help 1
         fi
 
         for FILE in "${FILES[@]}"
