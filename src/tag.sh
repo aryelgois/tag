@@ -21,6 +21,16 @@ function array_stringify {
     ARR=("${ARR[*]}")
 }
 
+function array_unique {
+    local -n TMP1=$1
+    local -A TMP2
+    local SEP=${2:-$'\x1f'}
+    SEP="${SEP::1}"
+    for i in "${TMP1[@]}"; do TMP2["$i"]=1; done
+    TMP1="$(printf "%s$SEP" "${!TMP2[@]}")"
+    array_parse TMP1 $SEP
+}
+
 function get_files {
     FILES=()
     if [[ $# -gt 0 ]]; then
