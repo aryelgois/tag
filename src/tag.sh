@@ -15,6 +15,14 @@ function array_parse {
     ARR=($ARR)
 }
 
+function array_remove {
+    local -n ARR=$1
+    local DELETE=$2
+    local TMP=()
+    for i in "${ARR[@]}"; do [[ $i != $DELETE ]] && TMP+=($i); done
+    ARR=("${TMP[@]}")
+}
+
 function array_stringify {
     local -n ARR=$1
     local IFS=${2:-$'\x1f'}
@@ -79,15 +87,6 @@ function read_tags {
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
-}
-
-function array_remove {
-    local DELETE=$1
-    shift
-    while [[ $# -gt 0 ]]; do
-        [[ $1 != $DELETE ]] && echo $1
-        shift
-    done
 }
 
 function unique {
