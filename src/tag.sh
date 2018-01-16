@@ -88,7 +88,7 @@ function add {
     IFS=','  ; NEW="${NEW[*]}"
     unset IFS
 
-    sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
+    [[ -e $TAG_FILE ]] && sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
     echo "$BASENAME/$NEW" >> $TAG_FILE
 }
 
