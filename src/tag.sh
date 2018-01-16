@@ -166,7 +166,18 @@ function remove {
 }
 
 function list {
-    :
+    file_exists "$1" || return
+
+    local BASENAME=$(basename "$1")
+    local TAG_FILE="$(dirname "$1")/.tags"
+    local TAGS=$(read_tags "$TAG_FILE" "$BASENAME")
+
+    IFS=','  ; TAGS=($TAGS)
+    IFS=$'\n'; TAGS=($(unique "${TAGS[@]}"))
+    IFS=','  ; TAGS="${TAGS[*]}"
+    unset IFS
+
+    echo "$TAGS"
 }
 
 function copy {
