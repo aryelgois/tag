@@ -256,12 +256,13 @@ fi
 while [[ $# -gt 0 ]]; do
     KEY="$1"
     NEXT="$2"
+    shift
     case $KEY in
     -h|--help)
         help
         ;;
     add|filter|find|remove)
-        shift 2
+        shift
         if [[ -z $NEXT || $# -eq 0 && -z $STDIN ]]; then
             if [[ -n $NEXT && $KEY == 'find' ]]; then
                 STDIN=('.')
@@ -283,7 +284,6 @@ while [[ $# -gt 0 ]]; do
         exit
         ;;
     clear|list)
-        shift
         if [[ $# -gt 0 ]]; then
             FILES=("$@")
         else
@@ -305,7 +305,6 @@ while [[ $# -gt 0 ]]; do
         exit
         ;;
     copy|move)
-        shift
         if [[ $# -eq 2 ]]; then
             $KEY "$1" "$2"
         else
@@ -314,7 +313,7 @@ while [[ $# -gt 0 ]]; do
         exit
         ;;
     *)
-        errcho "E: unexpected argument '$1'"
+        errcho "E: unexpected argument '$KEY'"
         exit 2
         ;;
     esac
