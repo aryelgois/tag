@@ -124,11 +124,18 @@ function remove {
     local BASENAME=$(basename "$1")
     local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
     local IFS=
+    local TMP=
     local NEW=
 
-    IFS=','  ; OLD=($OLD)
-    IFS=$'\n'; NEW=($(array_remove "$2" "${OLD[@]}"))
-    IFS=','  ; NEW="${NEW[*]}"
+    IFS=','
+    NEW=($OLD)
+    TMP=($2)
+    IFS=$'\n'
+    for i in "${TMP[@]}"; do
+        NEW=($(array_remove "$i" "${NEW[@]}"))
+    done
+    IFS=','
+    NEW="${NEW[*]}"
     unset IFS
 
     sed -i "/^$(ere_quote "$BASENAME")/ d" "$TAG_FILE"
