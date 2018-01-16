@@ -27,6 +27,15 @@ function dir_exists {
     fi
 }
 
+function has_tag {
+    local TAGS="$(list "$1")"
+    if [[ -z $TAGS ]]; then
+        errcho "E: '$1' has no tags"
+        return 5
+    fi
+    echo $TAGS
+}
+
 function ere_quote {
     sed 's/[][\/\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
@@ -181,11 +190,33 @@ function list {
 }
 
 function copy {
-    :
+    file_exists "$1" || return
+
+    local BASENAME=$(basename "$2")
+    local TAG_FILE="$(dirname "$2")/.tags"
+    local TAGS="$(has_tag "$1")"
+
+    [[ -n $TAGS ]] || return 5
+
+    [[ -e $2 ]] || cp -T "$1" "$2"
+
+    add "$2" "$TAGS"
 }
 
 function move {
-    :
+    file_exists "$1" || return
+
+    local BASENAME=$(basename "$2")
+    local TAG_FILE="$(dirname "$2")/.tags"
+    local TAGS="$(has_tag "$1")"
+
+    [[ -n $TAGS ]] || return 5
+
+    remove "$1" "$TAGS"
+
+    [[ -e $2 ]] || mv -T "$1" "$2"
+
+    add "$2" "$TAGS"
 }
 
 #
