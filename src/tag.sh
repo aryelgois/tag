@@ -364,7 +364,7 @@ function move {
 # Main
 #
 
-while [[ $# -gt 0 ]]; do
+if [[ $# -gt 0 ]]; then
     KEY="$1"
     NEXT="$2"
     shift
@@ -415,6 +415,6 @@ version: $VERSION"
         exit 2
         ;;
     esac
-done
+fi
 
 help 1
