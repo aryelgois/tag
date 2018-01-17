@@ -83,7 +83,7 @@ function ere_quote {
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
-        TMP=$(grep "^$(ere_quote "$2")" "$1" | tail -n 1)
+        TMP=$(grep "^$(ere_quote "$2")/" "$1" | tail -n 1)
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
