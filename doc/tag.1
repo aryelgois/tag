@@ -1,0 +1,214 @@
+.TH TAG 1 "16 Jan 2018" "0.1"
+.SH NAME
+tag \- a tool for using tags in files
+.SH SYNOPSIS
+.B tag
+.RI [ -h | --help ]
+.PP
+.B tag
+.IR add | filter | remove
+TAGS [PATH]...
+.PP
+.B tag
+.I clear
+[DIRECTORY|.tags]...
+.PP
+.B tag
+.I find
+TAGS [DIRECTORY]...
+.PP
+.B tag
+.I list
+[PATH]...
+.PP
+.B tag
+.IR copy | move
+SRC DEST
+.SH DESCRIPTION
+Tag allows a better file organization, with the use of short descriptions (tags)
+to group related files.
+.SH OPTIONS
+Each command interact with files differently, but their options follows the
+same idea:
+.PP
+.TP
+.I TAGS
+A list of comma (,) separated tags, with no space after the comma, but
+whitespace inside the tag is allowed (you will have to quote the argument). If
+it is only one tag, there shouldn't exist any comma.
+.PP
+.TP
+.I PATH
+The path to a file, absolute or relative to the current working directory. It
+can be provided from
+.BR stdin .
+.PP
+.TP
+.I DIRECTORY
+The same as
+.IR PATH ,
+but must be a valid directory.
+.PP
+.TP
+.I .tags
+The same as
+.IR PATH ,
+but must be a valid
+.I .tags
+file.
+.PP
+.TP
+.I SRC
+The same as
+.IR PATH ,
+but must be specified as an argument, and not from
+.BR stdin .
+.PP
+.TP
+.I DEST
+The same as
+.IR SRC .
+.SH COMMANDS
+.PP
+.BR -h , --help
+.RS
+Outputs the
+.BR SYNOPSIS /USAGE.
+.RE
+.PP
+.B add
+.IR TAGS " [" PATH ]...
+.RS
+Adds
+.I TAGS
+into the
+.I .tags
+relative to each
+.IR PATH .
+Duplicate tags are removed.
+.RE
+.PP
+.B filter
+.IR TAGS " [" PATH ]...
+.RS
+Echos only
+.I PATH
+which contain all
+.IR TAGS .
+.RE
+.PP
+.B remove
+.IR TAGS " [" PATH ]...
+.RS
+Removes all
+.I TAGS
+from all
+.IR PATH .
+.I PATH
+does not need to exist, but it relative
+.I .tags
+does.
+.RE
+.PP
+.B clear
+.RI [ DIRECTORY | .tags ]...
+.RS
+Removes file entries in
+.I .tags
+that do not exist. If a
+.I DIRECTORY
+is provided, all
+.I .tags
+inside it (recursively) are cleared.
+.RE
+.PP
+.B find
+.IR TAGS " [" DIRECTORY ]...
+.RS
+Finds all files inside
+.I DIRECTORY
+(recursively) that have all
+.IR .tags .
+Paths returned are relative to
+.IR DIRECTORY .
+.RE
+.PP
+.B list
+.RI [ PATH ]...
+.RS
+Lists tags associated to
+.IR PATH ,
+in a comma separated list.
+.RE
+.PP
+.B copy
+.I SRC DEST
+.RS
+Copies
+.I SRC
+tags to
+.IR DEST ,
+preserving previous
+.I DEST
+tags. If
+.I DEST
+does not exist,
+.I SRC
+is copied into it. See
+.I -T
+in
+.BR cp (1).
+.RE
+.PP
+.B move
+.I SRC DEST
+.RS
+Moves
+.I SRC
+tags to
+.IR DEST ,
+preserving previous
+.I DEST
+tags and removing all
+.I SRC
+tags. If
+.I DEST
+does not exist,
+.I SRC
+is moved into it. See
+.I -T
+in
+.BR mv (1).
+.RE
+.PP
+.SH SEE ALSO
+.BR awk (1),
+.BR basename (1),
+.BR bash (1)
+.IR command ,
+.BR cp (1),
+.BR cut (1),
+.BR dirname (1),
+.BR find (1),
+.BR grep (1),
+.BR mv (1),
+.BR printf (1),
+.BR sed (1)
+.SH BUGS
+.IR PATH " and " TAGS
+can not contain "\\n".
+.PP
+If you add a tag in the current directory, the
+.I .tags
+file is created there,
+instead of in the parent directory.
+.SH NOTES
+Developed with GNU bash, version
+.I 4.3.48(1)-release
+.SH AUTHOR
+Aryel Mota Góis
+.RB ( aryelgois
+at
+.IR GitHub )
+.SH COPYRIGHT
+Copyright (c) 2018 Aryel Mota Góis. MIT License.
