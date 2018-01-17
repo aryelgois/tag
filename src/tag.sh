@@ -9,6 +9,46 @@
 # Utils
 #
 
+function array_parse {
+    local -n ARR=$1
+    local IFS=${2:-$'\x1f'}
+    ARR=($ARR)
+}
+
+function array_remove {
+    local -n ARR=$1
+    local DELETE=$2
+    local TMP=()
+    for i in "${ARR[@]}"; do [[ $i != $DELETE ]] && TMP+=($i); done
+    ARR=("${TMP[@]}")
+}
+
+function array_stringify {
+    local -n ARR=$1
+    local IFS=${2:-$'\x1f'}
+    ARR=("${ARR[*]}")
+}
+
+function array_unique {
+    local -n TMP1=$1
+    local -A TMP2
+    local SEP=${2:-$'\x1f'}
+    SEP="${SEP::1}"
+    for i in "${TMP1[@]}"; do [[ -n $i ]] && TMP2["$i"]=1; done
+    TMP1="$(printf "%s$SEP" "${!TMP2[@]}")"
+    array_parse TMP1 $SEP
+}
+
+function get_files {
+    FILES=()
+    if [[ $# -gt 0 ]]; then
+        FILES=("$@")
+    elif [[ ! -t 0 ]]; then
+        FILES="$(</dev/stdin)"
+        array_parse FILES $'\n'
+    fi
+}
+
 function errcho {
     >&2 echo "$@"
 }
@@ -43,23 +83,10 @@ function ere_quote {
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
-        TMP=$(grep "^$(ere_quote "$2")" "$1" | tail -n 1)
+        TMP=$(grep "^$(ere_quote "$2")/" "$1" | tail -n 1)
         TMP="${TMP:((${#2} + 1))}"
     fi
     echo $TMP
-}
-
-function array_remove {
-    local DELETE=$1
-    shift
-    while [[ $# -gt 0 ]]; do
-        [[ $1 != $DELETE ]] && echo $1
-        shift
-    done
-}
-
-function unique {
-    for i in "$@"; do echo $i; done | sort -u
 }
 
 #
@@ -90,17 +117,14 @@ function add {
 
     local BASENAME=$(basename "$1")
     local TAG_FILE="$(dirname "$1")/.tags"
-    local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
-    local IFS=
-    local NEW=
+    local TAGS="$(read_tags "$TAG_FILE" "$BASENAME"),$2"
 
-    IFS=','  ; NEW=($OLD $2)
-    IFS=$'\n'; NEW=($(unique "${NEW[@]}"))
-    IFS=','  ; NEW="${NEW[*]}"
-    unset IFS
+    array_parse TAGS ,
+    array_unique TAGS ,
+    array_stringify TAGS ,
 
     [[ -e $TAG_FILE ]] && sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
-    echo "$BASENAME/$NEW" >> "$TAG_FILE"
+    echo "$BASENAME/$TAGS" >> "$TAG_FILE"
 }
 
 function filter {
@@ -108,38 +132,34 @@ function filter {
 
     local BASENAME=$(basename "$1")
     local TAG_FILE="$(dirname "$1")/.tags"
-    local IFS=','
-    local TAGS=($(ere_quote "$2"))
-    unset IFS
+    local TAGS="$(ere_quote "$2")"
     local LIST="/^$(ere_quote "$BASENAME")\//"
     local FOUND=
 
+    array_parse TAGS ,
     for i in "${TAGS[@]}"; do
-        LIST="$LIST && /.*\/.*$i(,|$)/"
+        LIST="$LIST && /(^[^\/]*\/|,)$i(,|$)/"
     done
 
     FOUND=$(awk "$LIST" "$TAG_FILE")
 
-    if [[ -n $FOUND ]]; then
-        echo "$1"
-    fi
+    [[ -n $FOUND ]] && echo "$1"
 }
 
 function find {
     dir_exists "$1" || return
 
-    local IFS=','
-    local TAGS=($(ere_quote "$2"))
+    local TAGS="$(ere_quote "$2")"
     local LIST=
-    unset IFS
 
+    array_parse TAGS ,
     for i in "${TAGS[@]}"; do
-        LIST="$LIST && /.*\/.*$i(,|$)/"
+        LIST="$LIST && /(^[^\/]*\/|,)$i(,|$)/"
     done
     LIST="${LIST:4}"
 
     command find "$1" -type f -name .tags | while read TAG_FILE; do
-        DIRNAME="$(dirname "$TAG_FILE")"
+        DIRNAME=$(dirname "$TAG_FILE")
         awk "$LIST" "$TAG_FILE" | cut -d / -f 1 | while read FILE; do
             echo "$DIRNAME/$FILE"
         done
@@ -151,26 +171,20 @@ function remove {
     file_exists "$TAG_FILE" || return
 
     local BASENAME=$(basename "$1")
-    local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
-    local IFS=
-    local TMP=
-    local NEW=
+    local TAGS=$(read_tags "$TAG_FILE" "$BASENAME")
+    local REMOVE="$2"
 
-    IFS=','
-    NEW=($OLD)
-    TMP=($2)
-    IFS=$'\n'
-    for i in "${TMP[@]}"; do
-        NEW=($(array_remove "$i" "${NEW[@]}"))
+    array_parse TAGS ,
+    array_parse REMOVE ,
+    for i in "${REMOVE[@]}"; do
+        array_remove TAGS "$i"
     done
-    IFS=','
-    NEW="${NEW[*]}"
-    unset IFS
+    array_stringify TAGS ,
 
     sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
 
-    if [[ -n $NEW ]]; then
-        echo "$BASENAME/$NEW" >> $TAG_FILE
+    if [[ -n $TAGS ]]; then
+        echo "$BASENAME/$TAGS" >> $TAG_FILE
     elif [[ ! -s $TAG_FILE ]]; then
         rm "$TAG_FILE"
     fi
@@ -179,7 +193,7 @@ function remove {
 function clear {
     file_exists "$1" || return
 
-    local BASENAME="$(basename "$1")"
+    local BASENAME=$(basename "$1")
 
     if [[ -d $1 ]]; then
         command find "$1" -type f -name .tags | while read TAG_FILE; do
@@ -191,7 +205,7 @@ function clear {
         return 6
     fi
 
-    local DIRNAME="$(dirname "$1")"
+    local DIRNAME=$(dirname "$1")
 
     cat "$1" | cut -d / -f 1 | while read FILE; do
         [[ -e "$DIRNAME/$FILE" ]] || sed -i "/^$(ere_quote "$FILE")\// d" "$1"
@@ -207,10 +221,9 @@ function list {
     local TAG_FILE="$(dirname "$1")/.tags"
     local TAGS=$(read_tags "$TAG_FILE" "$BASENAME")
 
-    IFS=','  ; TAGS=($TAGS)
-    IFS=$'\n'; TAGS=($(unique "${TAGS[@]}"))
-    IFS=','  ; TAGS="${TAGS[*]}"
-    unset IFS
+    array_parse TAGS ,
+    array_unique TAGS ,
+    array_stringify TAGS ,
 
     echo "$TAGS"
 }
@@ -249,63 +262,39 @@ function move {
 # Main
 #
 
-if [[ ! -t 0 ]]; then
-    IFS=$'\n'; STDIN=($(</dev/stdin)); unset IFS
-fi
-
 while [[ $# -gt 0 ]]; do
     KEY="$1"
     NEXT="$2"
+    shift
     case $KEY in
     -h|--help)
         help
         ;;
     add|filter|find|remove)
-        shift 2
-        if [[ -z $NEXT || $# -eq 0 && -z $STDIN ]]; then
-            if [[ -n $NEXT && $KEY == 'find' ]]; then
-                STDIN=('.')
-            else
-                help 1
-            fi
+        [[ -n $NEXT ]] && shift || help 1
+
+        get_files "$@"
+        if [[ ${#FILES[@]} -eq 0 ]]; then
+            [[ $KEY == 'find' ]] && FILES=('.') || help 1
         fi
 
-        if [[ $# -gt 0 ]]; then
-            FILES=("$@")
-        else
-            FILES=("${STDIN[@]}")
-        fi
-
-        for FILE in "${FILES[@]}"
-        do
+        for FILE in "${FILES[@]}"; do
             $KEY "$FILE" "$NEXT"
         done
         exit
         ;;
     clear|list)
-        shift
-        if [[ $# -gt 0 ]]; then
-            FILES=("$@")
-        else
-            FILES=("${STDIN[@]}")
-        fi
-
+        get_files "$@"
         if [[ ${#FILES[@]} -eq 0 ]]; then
-            if [[ $KEY == 'clear' ]]; then
-                FILES=('.')
-            else
-                help 1
-            fi
+            [[ $KEY == 'clear' ]] && FILES=('.') || help 1
         fi
 
-        for FILE in "${FILES[@]}"
-        do
+        for FILE in "${FILES[@]}"; do
             $KEY "$FILE"
         done
         exit
         ;;
     copy|move)
-        shift
         if [[ $# -eq 2 ]]; then
             $KEY "$1" "$2"
         else
@@ -314,7 +303,7 @@ while [[ $# -gt 0 ]]; do
         exit
         ;;
     *)
-        errcho "E: unexpected argument '$1'"
+        errcho "E: unexpected argument '$KEY'"
         exit 2
         ;;
     esac
