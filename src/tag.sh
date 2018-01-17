@@ -44,8 +44,8 @@ function get_files {
     if [[ $# -gt 0 ]]; then
         FILES=("$@")
     elif [[ ! -t 0 ]]; then
-        local IFS=$'\n';
-        FILES=($(</dev/stdin))
+        FILES="$(</dev/stdin)"
+        array_parse FILES $'\n'
     fi
 }
 
@@ -121,17 +121,14 @@ function add {
 
     local BASENAME=$(basename "$1")
     local TAG_FILE="$(dirname "$1")/.tags"
-    local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
-    local IFS=
-    local NEW=
+    local TAGS="$(read_tags "$TAG_FILE" "$BASENAME"),$2"
 
-    IFS=','  ; NEW=($OLD $2)
-    IFS=$'\n'; NEW=($(unique "${NEW[@]}"))
-    IFS=','  ; NEW="${NEW[*]}"
-    unset IFS
+    array_parse TAGS ,
+    array_unique TAGS ,
+    array_stringify TAGS ,
 
     [[ -e $TAG_FILE ]] && sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
-    echo "$BASENAME/$NEW" >> "$TAG_FILE"
+    echo "$BASENAME/$TAGS" >> "$TAG_FILE"
 }
 
 function filter {
@@ -139,14 +136,13 @@ function filter {
 
     local BASENAME=$(basename "$1")
     local TAG_FILE="$(dirname "$1")/.tags"
-    local IFS=','
-    local TAGS=($(ere_quote "$2"))
-    unset IFS
+    local TAGS="$(ere_quote "$2")"
     local LIST="/^$(ere_quote "$BASENAME")\//"
     local FOUND=
 
+    array_parse TAGS ,
     for i in "${TAGS[@]}"; do
-        LIST="$LIST && /.*\/.*$i(,|$)/"
+        LIST="$LIST && /(^[^\/]*\/|,)$i(,|$)/"
     done
 
     FOUND=$(awk "$LIST" "$TAG_FILE")
@@ -159,13 +155,12 @@ function filter {
 function find {
     dir_exists "$1" || return
 
-    local IFS=','
-    local TAGS=($(ere_quote "$2"))
+    local TAGS="$(ere_quote "$2")"
     local LIST=
-    unset IFS
 
+    array_parse TAGS ,
     for i in "${TAGS[@]}"; do
-        LIST="$LIST && /.*\/.*$i(,|$)/"
+        LIST="$LIST && /(^[^\/]*\/|,)$i(,|$)/"
     done
     LIST="${LIST:4}"
 
@@ -182,26 +177,20 @@ function remove {
     file_exists "$TAG_FILE" || return
 
     local BASENAME=$(basename "$1")
-    local OLD=$(read_tags "$TAG_FILE" "$BASENAME")
-    local IFS=
-    local TMP=
-    local NEW=
+    local TAGS=$(read_tags "$TAG_FILE" "$BASENAME")
+    local REMOVE="$2"
 
-    IFS=','
-    NEW=($OLD)
-    TMP=($2)
-    IFS=$'\n'
-    for i in "${TMP[@]}"; do
-        NEW=($(array_remove "$i" "${NEW[@]}"))
+    array_parse TAGS ,
+    array_parse REMOVE ,
+    for i in "${REMOVE[@]}"; do
+        array_remove TAGS "$i"
     done
-    IFS=','
-    NEW="${NEW[*]}"
-    unset IFS
+    array_stringify TAGS ,
 
     sed -i "/^$(ere_quote "$BASENAME")\// d" "$TAG_FILE"
 
-    if [[ -n $NEW ]]; then
-        echo "$BASENAME/$NEW" >> $TAG_FILE
+    if [[ -n $TAGS ]]; then
+        echo "$BASENAME/$TAGS" >> $TAG_FILE
     elif [[ ! -s $TAG_FILE ]]; then
         rm "$TAG_FILE"
     fi
@@ -238,10 +227,9 @@ function list {
     local TAG_FILE="$(dirname "$1")/.tags"
     local TAGS=$(read_tags "$TAG_FILE" "$BASENAME")
 
-    IFS=','  ; TAGS=($TAGS)
-    IFS=$'\n'; TAGS=($(unique "${TAGS[@]}"))
-    IFS=','  ; TAGS="${TAGS[*]}"
-    unset IFS
+    array_parse TAGS ,
+    array_unique TAGS ,
+    array_stringify TAGS ,
 
     echo "$TAGS"
 }
