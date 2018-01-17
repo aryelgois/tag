@@ -20,7 +20,7 @@ gzip [doc/tag.1] into `/usr/local/man/man1/`
 
 # Documentation
 
-There is a man page availabe:
+There is a man page available:
 
 - If you have installed the package, simply run `man tag`
 - You can also run `man doc/tag.1` inside the repository
