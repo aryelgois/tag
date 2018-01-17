@@ -153,7 +153,9 @@ USAGE:
 
     tag copy|move SRC DEST
 
-PATH and DIRECTORY can be passed with stdin"
+PATH and DIRECTORY can be passed with stdin
+
+For details, see tag(1)"
     exit $1
 }
 
