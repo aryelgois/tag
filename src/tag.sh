@@ -89,10 +89,6 @@ function read_tags {
     echo $TMP
 }
 
-function unique {
-    for i in "$@"; do echo $i; done | sort -u
-}
-
 #
 # Commands
 #
