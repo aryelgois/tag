@@ -143,9 +143,7 @@ function filter {
 
     FOUND=$(awk "$LIST" "$TAG_FILE")
 
-    if [[ -n $FOUND ]]; then
-        echo "$1"
-    fi
+    [[ -n $FOUND ]] && echo "$1"
 }
 
 function find {
@@ -280,8 +278,7 @@ while [[ $# -gt 0 ]]; do
             [[ $KEY == 'find' ]] && FILES=('.') || help 1
         fi
 
-        for FILE in "${FILES[@]}"
-        do
+        for FILE in "${FILES[@]}"; do
             $KEY "$FILE" "$NEXT"
         done
         exit
@@ -292,8 +289,7 @@ while [[ $# -gt 0 ]]; do
             [[ $KEY == 'clear' ]] && FILES=('.') || help 1
         fi
 
-        for FILE in "${FILES[@]}"
-        do
+        for FILE in "${FILES[@]}"; do
             $KEY "$FILE"
         done
         exit
