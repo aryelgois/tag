@@ -9,12 +9,18 @@
 # Utils
 #
 
+# Split a string into an array
+#   $1 string to be splitted (byref)
+#   $2 char delimiter (default to x1F)
 function array_parse {
     local -n ARR=$1
     local IFS=${2:-$'\x1f'}
     ARR=($ARR)
 }
 
+# Remove all occurrences of a value in an array
+#   $1 array (byref)
+#   $2 value to be removed
 function array_remove {
     local -n ARR=$1
     local DELETE=$2
@@ -23,12 +29,22 @@ function array_remove {
     ARR=("${TMP[@]}")
 }
 
+# Join an array items with a single character
+#   $1 array to be joined (byref)
+#   $2 char delimiter (default to x1F)
 function array_stringify {
     local -n ARR=$1
     local IFS=${2:-$'\x1f'}
     ARR=("${ARR[*]}")
 }
 
+# Remove repeated items in array
+#   $1 array (byref)
+#   $2 char delimiter used during array rebuild (default to x1F)
+#
+# NOTE:
+#   - It removes null values
+#   - Result is unordered
 function array_unique {
     local -n TMP1=$1
     local -A TMP2
@@ -39,6 +55,11 @@ function array_unique {
     array_parse TMP1 $SEP
 }
 
+# Get FILE array from arguments or stdin
+#   $@ files
+#
+# If any argument is provided, FILES will contain them. Otherwise, FILES will
+# contain the stdin, if it's not a TTY
 function get_files {
     FILES=()
     if [[ $# -gt 0 ]]; then
@@ -49,10 +70,17 @@ function get_files {
     fi
 }
 
+# Echo to stderr
+#   $@ output message
 function errcho {
     >&2 echo "$@"
 }
 
+# Test if file exists
+#   $1 path to file
+#
+# Error code:
+#   3 file does not exist or is inaccessible
 function file_exists {
     if [[ ! -e $1 ]]; then
         errcho "E: File '$1' does not exist or is inaccessible"
@@ -60,6 +88,11 @@ function file_exists {
     fi
 }
 
+# Test if directory exists
+#   $1 path to directory
+#
+# Error code:
+#   4 not a directory or 3 in file_exists()
 function dir_exists {
     if [[ ! -d $1 ]]; then
         errcho "E: '$1' is not a directory, does not exist or is inaccessible"
@@ -67,6 +100,11 @@ function dir_exists {
     fi
 }
 
+# Test if file has tags and stdout them
+#   $1 path to file
+#
+# Error code:
+#   5 file has no tags
 function has_tag {
     local TAGS="$(list "$1")"
     if [[ -z $TAGS ]]; then
@@ -76,10 +114,15 @@ function has_tag {
     echo $TAGS
 }
 
+# Escape string to embed in grep
+#   $* string to be escaped
 function ere_quote {
     sed 's/[][\/\.|$(){}?+*^]/\\&/g' <<< "$*"
 }
 
+# Get tags associated to a file in a .tags
+#   $1 path to .tags
+#   $2 file name to
 function read_tags {
     local TMP=
     if [[ -e $1 ]]; then
@@ -93,6 +136,8 @@ function read_tags {
 # Commands
 #
 
+# Output short help about the script
+#   $1 status code to return
 function help {
     echo "\
 USAGE:
@@ -112,6 +157,12 @@ PATH and DIRECTORY can be passed with stdin"
     exit $1
 }
 
+# Add a tag to a file
+#   $1 path to file
+#   $2 tags to add
+#
+# NOTE:
+#   - Tags are listed in '.tags' at the file's directory
 function add {
     file_exists "$1" || return
 
@@ -127,6 +178,11 @@ function add {
     echo "$BASENAME/$TAGS" >> "$TAG_FILE"
 }
 
+# Filter file with a tag
+#   $1 path to file
+#   $2 tags to match
+#
+# stdout $1 if it has all tags
 function filter {
     file_exists "$1" || return
 
@@ -146,6 +202,11 @@ function filter {
     [[ -n $FOUND ]] && echo "$1"
 }
 
+# Find files with a tag inside a directory
+#   $1 path to directory
+#   $2 tags to search
+#
+# stdout list of files found with all tags
 function find {
     dir_exists "$1" || return
 
@@ -166,6 +227,12 @@ function find {
     done
 }
 
+# Remove tags associated to a file
+#   $1 path to file
+#   $2 tags to remove
+#
+# NOTE:
+#   - The file does not need to exist, but the .tags file does
 function remove {
     local TAG_FILE="$(dirname "$1")/.tags"
     file_exists "$TAG_FILE" || return
@@ -190,6 +257,14 @@ function remove {
     fi
 }
 
+# Clear .tags files listing nonexistent files
+#   $1 path to directory or .tags file
+#
+# Error code:
+#   6 file is not a .tags file
+#
+# NOTE:
+#   - If a directory is passed, all .tags inside it are cleared
 function clear {
     file_exists "$1" || return
 
@@ -214,6 +289,8 @@ function clear {
     [[ ! -s $1 ]] && rm "$1"
 }
 
+# List file tags
+#   $1 path to file
 function list {
     file_exists "$1" || return
 
@@ -228,6 +305,15 @@ function list {
     echo "$TAGS"
 }
 
+# Copy tags from one file to another
+#   $1 path to source file
+#   $2 path to destiny file
+#
+# Error code:
+#   5 source has no tags
+#
+# NOTE:
+#   - Also copy the file if destiny does not exist
 function copy {
     file_exists "$1" || return
 
@@ -242,6 +328,15 @@ function copy {
     add "$2" "$TAGS"
 }
 
+# Move tags from one file to another
+#   $1 path to source file
+#   $2 path to destiny file
+#
+# Error code:
+#   5 source has no tags
+#
+# NOTE:
+#   - Also move the file if destiny does not exist
 function move {
     file_exists "$1" || return
 
