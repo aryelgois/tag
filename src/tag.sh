@@ -6,6 +6,8 @@
 # @license MIT
 # @link https://github.com/aryelgois/tag
 
+VERSION='0.1'
+
 #
 # Utils
 #
@@ -143,6 +145,8 @@ function help {
     echo "\
 USAGE:
     tag [-h|--help]
+
+    tag [-v|--version]
 
     tag add|filter|remove TAGS [PATH]...
 
@@ -367,6 +371,12 @@ while [[ $# -gt 0 ]]; do
     case $KEY in
     -h|--help)
         help
+        ;;
+    -v|--version)
+        echo "\
+tag - a tool for using tags in files
+version: $VERSION"
+        exit
         ;;
     add|filter|find|remove)
         [[ -n $NEXT ]] && shift || help 1
