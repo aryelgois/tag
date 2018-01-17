@@ -159,7 +159,7 @@ function find {
     LIST="${LIST:4}"
 
     command find "$1" -type f -name .tags | while read TAG_FILE; do
-        DIRNAME="$(dirname "$TAG_FILE")"
+        DIRNAME=$(dirname "$TAG_FILE")
         awk "$LIST" "$TAG_FILE" | cut -d / -f 1 | while read FILE; do
             echo "$DIRNAME/$FILE"
         done
@@ -193,7 +193,7 @@ function remove {
 function clear {
     file_exists "$1" || return
 
-    local BASENAME="$(basename "$1")"
+    local BASENAME=$(basename "$1")
 
     if [[ -d $1 ]]; then
         command find "$1" -type f -name .tags | while read TAG_FILE; do
@@ -205,7 +205,7 @@ function clear {
         return 6
     fi
 
-    local DIRNAME="$(dirname "$1")"
+    local DIRNAME=$(dirname "$1")
 
     cat "$1" | cut -d / -f 1 | while read FILE; do
         [[ -e "$DIRNAME/$FILE" ]] || sed -i "/^$(ere_quote "$FILE")\// d" "$1"
