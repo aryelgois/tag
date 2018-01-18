@@ -144,9 +144,9 @@ function read_tags {
 function help {
     echo "\
 USAGE:
-    tag [-h|--help]
+    tag [help|-h|--help]
 
-    tag [-v|--version]
+    tag [version|-v|--version]
 
     tag add|filter|remove TAGS [PATH]...
 
@@ -369,10 +369,10 @@ if [[ $# -gt 0 ]]; then
     NEXT="$2"
     shift
     case $KEY in
-    -h|--help)
+    help-h|--help)
         help
         ;;
-    -v|--version)
+    version|-v|--version)
         echo "\
 tag - a tool for using tags in files
 version: $VERSION"
